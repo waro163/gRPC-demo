@@ -1,0 +1,24 @@
+syntax = "proto3";
+package product;
+
+import "google/protobuf/any.proto";
+
+option go_package = "./service";
+
+message InputRequest {
+    int32 id = 1;
+    optional string name = 2;
+}
+
+message OutputResponse {
+    int32 stock = 1;
+    repeated string name = 2;
+    google.protobuf.Any data = 3;
+
+}
+
+service ProductService {
+    rpc GetProdStock(InputRequest) returns (OutputResponse){};
+    // 双向流
+    rpc pingPongStream(stream InputRequest) returns (stream OutputResponse){};
+}

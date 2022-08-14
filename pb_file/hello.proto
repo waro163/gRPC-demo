@@ -1,0 +1,20 @@
+syntax = "proto3";
+package hello;
+import "google/protobuf/timestamp.proto";
+option go_package = "./hello";
+
+message InputRequest {
+    string id = 1;
+    optional string name = 2;
+    repeated string phones = 3;
+}
+
+message OutputResponse {
+    string msg = 1;
+    int32 code = 2;
+    google.protobuf.Timestamp last_updated = 3;
+}
+
+service HelloService {
+    rpc Hello(InputRequest) returns (OutputResponse) {};
+}
