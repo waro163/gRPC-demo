@@ -20,22 +20,19 @@ protoc --go_out=. --go-grpc_out=. ./pb_file/product.proto
 ```
 
 ## server file
-
-pb_server.go
+server.go
 
 run server
 ```bash
-go run -mod=vendor pb_server.go
+go run -mod=vendor ./simple/server.go
 ```
 
 ## client file
-
-copy ./service/ all file to ./pb_client/
-./pb_client/client.go
+client.go
 
 run client
 ```bash
-go run -mod=vendor ./pb_client/client.go
+go run -mod=vendor ./simple/client.go
 ```
 
 

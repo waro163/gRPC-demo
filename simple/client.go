@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	pb "grpcdemo/pb_client/service"
+	pb "grpcdemo/service"
 	"time"
 
 	"google.golang.org/grpc"
