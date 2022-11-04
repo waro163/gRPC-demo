@@ -33,17 +33,19 @@ func (p *Product) PingPongStream(stream pb.ProductService_PingPongStreamServer) 
 		req, err := stream.Recv()
 		if err != nil {
 			if err == io.EOF {
-				fmt.Println("服务接受结束")
+				fmt.Println("服务接收结束")
 				return err
 			}
-			fmt.Println("server recv error: ", err)
+			fmt.Println("stream server recv error: ", err)
 			return err
 		}
-		err = stream.Send(&pb.OutputResponse{Stock: req.Id})
+		fmt.Println("收到数据：", req.Id)
+		err = stream.Send(&pb.OutputResponse{Stock: req.Id + 1})
 		if err != nil {
-			fmt.Println("server send error: ", err)
+			fmt.Println("stream server send error: ", err)
 			return err
 		}
+		fmt.Println("发送数据：", req.Id+1)
 	}
 }
 
@@ -51,7 +53,7 @@ var ProductImpl = new(Product)
 
 func main() {
 
-	server := grpc.NewServer(grpc.ChainUnaryInterceptor(AuthInterceptor))
+	server := grpc.NewServer(grpc.ChainUnaryInterceptor(AuthUnaryInterceptor))
 	pb.RegisterProductServiceServer(server, ProductImpl)
 
 	listen, err := net.Listen("tcp", ":8081")
@@ -68,7 +70,7 @@ func main() {
 
 }
 
-func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "Not Authorization")
