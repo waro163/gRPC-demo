@@ -13,8 +13,11 @@ import (
 
 func main() {
 	input := pb.InputRequest{Id: 123}
-	conn, err := grpc.Dial("localhost:8081", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithChainUnaryInterceptor(AuthUnaryInterceptor))
-	// conn, err := grpc.Dial("localhost:8081", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial("localhost:8081",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithChainUnaryInterceptor(AuthUnaryInterceptor),
+		grpc.WithStreamInterceptor(AuthStreamInterceptor),
+	)
 
 	if err != nil {
 		fmt.Println("dial server error: ", err)
@@ -47,6 +50,9 @@ func main() {
 }
 
 func handleStream(stream pb.ProductService_PingPongStreamClient, exitCh chan struct{}) {
+	defer func() {
+		exitCh <- struct{}{}
+	}()
 	count := 5
 	var Num int32 = 100
 	for i := 0; i < count; i++ {
@@ -66,10 +72,14 @@ func handleStream(stream pb.ProductService_PingPongStreamClient, exitCh chan str
 		Num = resp.Stock + 1
 		time.Sleep(time.Second)
 	}
-	exitCh <- struct{}{}
 }
 
 func AuthUnaryInterceptor(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	newCtx := metadata.AppendToOutgoingContext(ctx, userKey, userValue, passKey, passValue)
 	return invoker(newCtx, method, req, reply, cc, opts...)
+}
+
+func AuthStreamInterceptor(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+	newCtx := metadata.AppendToOutgoingContext(ctx, userKey, "some", passKey, "some")
+	return streamer(newCtx, desc, cc, method, opts...)
 }

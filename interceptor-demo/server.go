@@ -52,7 +52,10 @@ var ProductImpl = new(Product)
 
 func main() {
 
-	server := grpc.NewServer(grpc.ChainUnaryInterceptor(AuthInterceptor))
+	server := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(AuthInterceptor),
+		grpc.ChainStreamInterceptor(StreamInterceptor),
+	)
 	pb.RegisterProductServiceServer(server, ProductImpl)
 
 	listen, err := net.Listen("tcp", ":8081")
@@ -90,4 +93,20 @@ func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 		return nil, status.Error(codes.Unauthenticated, "Invalid Authorization")
 	}
 	return handler(ctx, req)
+}
+
+func StreamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	md, ok := metadata.FromIncomingContext(ss.Context())
+	if !ok {
+		return status.Error(codes.Unauthenticated, "Not Authorization")
+	}
+	user := md.Get(userKey)
+	if len(user) < 1 {
+		return status.Error(codes.Unauthenticated, "Empty Authorization")
+	}
+	passwd := md.Get(passKey)
+	if len(passwd) < 1 {
+		return status.Error(codes.Unauthenticated, "Wrong Authorization")
+	}
+	return handler(srv, ss)
 }
